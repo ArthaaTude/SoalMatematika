@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permainan Matematika</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: black;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1, h2 {
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background-color: #28a745;
+            color: white;
+            transition: all 0.3s ease-in-out;
+            margin: 10px 0;
+            width: 80%;
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: scale(1.1);
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+        input {
+            padding: 10px;
+            width: 80%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #hasilSalah {
+            color: red;
+            font-weight: bold;
+        }
+
+        #hasilBenar {
+            color: green;
+            font-weight: bold;
+        }
+
+        #statistik {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        #statistik table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #statistik th, #statistik td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        #statistik th {
+            background-color: #f2f2f2;
+        }
+
+        /* Responsif untuk tampilan kecil */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 0 10px;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px 0;
+            }
+
+            input {
+                width: 100%;
+            }
+
+            h1, h2 {
+                font-size: 20px;
+            }
+        }
+
+        .card {
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Permainan Matematika</h1>
+        
+        <!-- Section input nama pemain -->
+        <div id="namaSection" class="card">
+            <label for="nama" style="font-size: 18px;">Masukkan Nama:</label>
+            <input type="text" id="nama" maxlength="10">
+            <button onclick="mulaiPermainan()">Mulai</button>
+        </div>
+
+        <!-- Section untuk pilih level -->
+        <div id="gameSection" class="hidden card">
+            <h2 id="namaPemain" style="font-size: 24px;"></h2>
+            <p style="font-size: 18px;">Pilih Tingkat Kesulitan:</p>
+            <button onclick="setLevel('gampang')">Gampang</button>
+            <button onclick="setLevel('sulit')">Sulit</button>
+            <button onclick="setLevel('sangat_sulit')">Sangat Sulit</button>
+            <button onclick="setLevel('hacker')">Hacker</button>
+        </div>
+
+        <!-- Section soal permainan -->
+        <div id="soalSection" class="hidden card">
+            <h2 id="modePilih" style="font-size: 22px;"></h2>
+            <p id="soal" style="font-size: 18px;"></p>
+            <input type="number" id="jawaban">
+            <button onclick="cekJawaban()">Submit</button>
+            <p id="hasil"></p>
+            <p id="waktu"></p>
+            <button onclick="gantiMode()">🔄 Ganti Mode</button>
+            <button onclick="menyerah()">🚩 Nyerah</button>
+        </div>
+
+        <!-- Section hasil akhir permainan -->
+        <div id="hasilAkhir" class="hidden card">
+            <h2>Hasil Akhir</h2>
+            <div id="statistik"></div>
+            <button onclick="tambahPemain()">➕ Tambah Nama</button>
+            <button onclick="ulangPermainan()">🔄 Ulangi Permainan</button>
+        </div>
+    </div>
+
+    <script>
+        let pemain = [];
+        let nama = "";
+        let level = "";
+        let waktu = 0;
+        let timer;
+        let soalAktif = {};
+        let waktuMulai;
+
+        function mulaiPermainan() {
+            nama = document.getElementById("nama").value.trim();
+
+            // Cek apakah nama sudah ada di "database"
+            if (nama.length < 3 || !isNaN(nama)) {
+                alert("Masukkan nama minimal 3 huruf!");
+                return;
+            }
+
+            if (pemain.some(player => player.nama.toLowerCase() === nama.toLowerCase())) {
+                alert("Nama sudah terdaftar! Silakan pilih nama lain.");
+                return;
+            }
+
+            waktuMulai = new Date().toLocaleTimeString();
+
+            pemain.push({
+                nama,
+                benar: { gampang: 0, sulit: 0, sangat_sulit: 0, hacker: 0 },
+                salah: { gampang: 0, sulit: 0, sangat_sulit: 0, hacker: 0 }
+            });
+
+            document.getElementById("namaSection").classList.add("hidden");
+            document.getElementById("gameSection").classList.remove("hidden");
+            document.getElementById("namaPemain").innerText = "Halo, " + nama + "!";
+        }
+
+        function setLevel(selectedLevel) {
+            level = selectedLevel;
+            document.getElementById("gameSection").classList.add("hidden");
+            document.getElementById("soalSection").classList.remove("hidden");
+            document.getElementById("modePilih").innerText = "Mode: " + level.toUpperCase();
+            buatSoal();
+        }
+
+        function buatSoal() {
+            let angka1, angka2, operasi;
+            
+            switch (level) {
+                case "gampang":
+                    angka1 = Math.floor(Math.random() * 15) + 1;
+                    angka2 = Math.floor(Math.random() * 15) + 1;
+                    waktu = 10;
+                    break;
+                case "sulit":
+                    angka1 = Math.floor(Math.random() * 100) + 10;
+                    angka2 = Math.floor(Math.random() * 100) + 10;
+                    waktu = 15;
+                    break;
+                case "sangat_sulit":
+                    angka1 = Math.floor(Math.random() * 900) + 100;
+                    angka2 = Math.floor(Math.random() * 900) + 100;
+                    waktu = 30;
+                    break;
+                case "hacker":
+                    angka1 = Math.floor(Math.random() * 900000) + 10000;
+                    angka2 = Math.floor(Math.random() * 900000) + 10000;
+                    waktu = 60;
+                    break;
+            }
+
+            let operasiPilihan = ["+", "-", "x"];
+            operasi = operasiPilihan[Math.floor(Math.random() * operasiPilihan.length)];
+
+            let hasil;
+            if (operasi === "+") hasil = angka1 + angka2;
+            else if (operasi === "-") hasil = angka1 - angka2;
+            else if (operasi === "x") hasil = angka1 * angka2;
+
+            soalAktif = { angka1, angka2, operasi, hasil };
+            document.getElementById("soal").innerText = `${angka1} ${operasi} ${angka2} = ?`;
+            document.getElementById("hasil").innerText = "";
+
+            clearInterval(timer);
+            mulaiTimer();
+        }
+
+        function mulaiTimer() {
+            let sisaWaktu = waktu;
+            document.getElementById("waktu").innerText = `Waktu: ${sisaWaktu} detik`;
+
+            timer = setInterval(() => {
+                sisaWaktu--;
+                document.getElementById("waktu").innerText = `Waktu: ${sisaWaktu} detik`;
+                
+                if (sisaWaktu <= 0) {
+                    clearInterval(timer);
+                    pemain[pemain.length - 1].salah[level]++;
+                    document.getElementById("hasil").innerHTML = `<span id="hasilSalah">Salah! Jawaban yang benar: ${soalAktif.angka1} ${soalAktif.operasi} ${soalAktif.angka2} = ${soalAktif.hasil}</span>`;
+                    setTimeout(buatSoal, 2000);
+                }
+            }, 1000);
+        }
+
+        function cekJawaban() {
+            let jawaban = parseInt(document.getElementById("jawaban").value);
+            if (!jawaban && jawaban !== 0) {
+                alert("Masukkan jawaban sebelum submit!");
+                return; // Jangan lanjut jika jawaban kosong
+            }
+
+            if (jawaban === soalAktif.hasil) {
+                document.getElementById("hasil").innerHTML = `<span id="hasilBenar">Benar!</span>`;
+                pemain[pemain.length - 1].benar[level]++;
+            } else {
+                pemain[pemain.length - 1].salah[level]++;
+                document.getElementById("hasil").innerHTML = `<span id="hasilSalah">Salah! Jawaban yang benar: ${soalAktif.angka1} ${soalAktif.operasi} ${soalAktif.angka2} = ${soalAktif.hasil}</span>`;
+            }
+
+            // Reset input jawaban setelah submit
+            document.getElementById("jawaban").value = "";
+            setTimeout(buatSoal, 2000);
+        }
+
+        function gantiMode() {
+            document.getElementById("soalSection").classList.add("hidden");
+            document.getElementById("gameSection").classList.remove("hidden");
+        }
+
+        function menyerah() {
+            document.getElementById("soalSection").classList.add("hidden");
+            document.getElementById("hasilAkhir").classList.remove("hidden");
+
+            // Menampilkan statistik untuk semua pemain
+            const pemainStatistik = pemain.map(player => {
+                return `<tr>
+                            <td>${player.nama}</td>
+                            <td>${player.benar.gampang}</td>
+                            <td>${player.salah.gampang}</td>
+                            <td>${player.benar.sulit}</td>
+                            <td>${player.salah.sulit}</td>
+                            <td>${player.benar.sangat_sulit}</td>
+                            <td>${player.salah.sangat_sulit}</td>
+                            <td>${player.benar.hacker}</td>
+                            <td>${player.salah.hacker}</td>
+                        </tr>`;
+            }).join('');
+
+            document.getElementById("statistik").innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Benar (Gampang)</th>
+                            <th>Salah (Gampang)</th>
+                            <th>Benar (Sulit)</th>
+                            <th>Salah (Sulit)</th>
+                            <th>Benar (Sangat Sulit)</th>
+                            <th>Salah (Sangat Sulit)</th>
+                            <th>Benar (Hacker)</th>
+                            <th>Salah (Hacker)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pemainStatistik}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function tambahPemain() {
+            document.getElementById("hasilAkhir").classList.add("hidden");
+            document.getElementById("namaSection").classList.remove("hidden");
+        }
+
+        function ulangPermainan() {
+            location.reload();
+        }
+
+        // Menambahkan fitur Enter untuk submit jawaban
+        document.getElementById("jawaban").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                cekJawaban();
+            }
+        });
+    </script>
+</body>
+</html>
