@@ -200,6 +200,8 @@
     </style>
   </head>
   <body>
+    <audio id="suaraBenar" src="benar.mp3"></audio>
+    <audio id="suaraSalah" src="salah.mp3"></audio>
     <div class="container">
       <h1 style="color: wheat;">Permainan Matematika</h1>
 
@@ -494,15 +496,13 @@
         let currentPlayer = dataPemain.find((player) => player.nama === nama);
 
         if (jawaban === soalAktif.hasil) {
-          document.getElementById(
-            "hasil"
-          ).innerHTML = `<span id="hasilBenar">Benar!</span>`;
+          document.getElementById("hasil").innerHTML = `<span id="hasilBenar">Benar!</span>`;
           currentPlayer.benar[level]++;
+          document.getElementById("suaraBenar").play(); // Memutar suara benar
         } else {
-          document.getElementById(
-            "hasil"
-          ).innerHTML = `<span id="hasilSalah">Salah! Jawaban yang benar: ${soalAktif.hasil}</span>`;
+          document.getElementById("hasil").innerHTML = `<span id="hasilSalah">Salah! Jawaban yang benar: ${soalAktif.hasil}</span>`;
           currentPlayer.salah[level]++;
+          document.getElementById("suaraSalah").play(); // Memutar suara salah
         }
 
         // Simpan perubahan ke localStorage
@@ -511,6 +511,7 @@
         document.getElementById("jawaban").value = "";
         setTimeout(buatSoal, 2000);
       }
+
 
       function gantiMode() {
         document.getElementById("soalSection").classList.add("hidden");
